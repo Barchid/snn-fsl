@@ -25,7 +25,7 @@ def main():
 
     # add script-specific args
     parser.add_argument("--algorithm", type=str, default="protonet")
-    parser.add_argument("--dataset", type=str, default="mini-imagenet")
+    parser.add_argument("--dataset", type=str, default="mini-imagenet", choices=["mini-imagenet", "tiered-imagenet", ""])
     parser.add_argument("--root", type=str, default="~/data")
     parser.add_argument("--meta_batch_size", type=int, default=16)
     parser.add_argument("--seed", type=int, default=42)
