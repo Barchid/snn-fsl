@@ -338,7 +338,6 @@ class SCNN4(torch.nn.Module):
         else:
             x = neural_coding(x, self.neural_coding, self.timesteps)
 
-        print(x.shape)
         x = self.features(x)
         x = self.classifier(x)
         return x
