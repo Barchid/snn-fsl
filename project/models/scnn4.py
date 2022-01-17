@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import torch
+import torch.nn as nn
 import learn2learn as l2l
 
 from scipy.stats import truncnorm
@@ -301,11 +302,23 @@ class SCNN4(torch.nn.Module):
         super(SCNN4, self).__init__()
         if embedding_size is None:
             embedding_size = 25 * hidden_size
+
+        self.neural_coding = neural_coding
+        self.timesteps = timesteps
+
+        if self.neural_coding is None:
+            self.conv1 = nn.Conv2d(channels, hidden_size, kernel_size=3,
+                                   stride=2 if max_pool else 1, padding=1, bias=True)
+            maml_init_(self.conv1)
+            self.bn1 = nn.BatchNorm2d(hidden_size)
+            surr_func = surrogate.ATan(alpha=2.0, spiking=True)
+            self.sn1 = neuron.MultiStepLIFNode(detach_reset=True, surrogate_function=surr_func)
+
         self.features = SCNN4Backbone(
             hidden_size=hidden_size,
-            channels=channels,
+            channels=hidden_size if neural_coding is None else channels,
             max_pool=max_pool,
-            layers=layers,
+            layers=layers - 1 if neural_coding is None else layers,
         )
         self.classifier = torch.nn.Linear(
             embedding_size,
@@ -314,13 +327,18 @@ class SCNN4(torch.nn.Module):
         )
         maml_init_(self.classifier)
         self.hidden_size = hidden_size
-        self.neural_coding = neural_coding
-        self.timesteps = timesteps
 
     def forward(self, x):
-        if self.neural_coding is not None:
+        if self.neural_coding is None:
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x.unsqueeze_(0)
+            x = x.repeat(self.timesteps, 1, 1, 1, 1)
+            x = self.sn1(x)
+        else:
             x = neural_coding(x, self.neural_coding, self.timesteps)
 
+        print(x.shape)
         x = self.features(x)
         x = self.classifier(x)
         return x
