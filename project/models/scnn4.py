@@ -235,26 +235,47 @@ class OmniglotSCNN(torch.nn.Module):
         return x
 
 
-class SCNN4Backbone(SConvBase):
+class SCNN4Backbone(nn.Module):
 
     def __init__(
         self,
+        timesteps: int,
+        neural_coding: str = None,
         hidden_size=64,
         layers=4,
         channels=3,
         max_pool=False
     ):
-        super(SCNN4Backbone, self).__init__(
+        self.neural_coding = neural_coding
+        self.timesteps = timesteps
+
+        if self.neural_coding is None:
+            self.conv1 = nn.Conv2d(channels, hidden_size, kernel_size=3,
+                                   stride=2 if max_pool else 1, padding=1, bias=False)
+            self.bn1 = nn.BatchNorm2d(hidden_size)
+            surr_func = surrogate.ATan(alpha=2.0, spiking=True)
+            self.sn1 = neuron.MultiStepLIFNode(detach_reset=True, surrogate_function=surr_func)
+
+        self.backbone = SConvBase(
             hidden=hidden_size,
-            layers=layers,
-            channels=channels,
-            max_pool=max_pool,
+            layers=layers - 1 if neural_coding else layers,
+            channels=hidden_size if neural_coding else channels,
+            max_pool=max_pool
         )
 
     def forward(self, x):
         functional.reset_net(self)
-        print(x.shape)
-        x = super(SCNN4Backbone, self).forward(x)
+
+        if self.neural_coding is None:
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x.unsqueeze_(0)
+            x = x.repeat(self.timesteps, 1, 1, 1, 1)
+            x = self.sn1(x)
+        else:
+            x = neural_coding(x, self.neural_coding, self.timesteps)
+
+        x = self.backbone(x)
         x = x.mean(0)
         x = x.reshape(x.size(0), -1)
         return x
@@ -304,17 +325,9 @@ class SCNN4(torch.nn.Module):
         if embedding_size is None:
             embedding_size = 25 * hidden_size
 
-        self.neural_coding = neural_coding
-        self.timesteps = timesteps
-
-        if self.neural_coding is None:
-            self.conv1 = nn.Conv2d(channels, hidden_size, kernel_size=3,
-                                   stride=2 if max_pool else 1, padding=1, bias=False)
-            self.bn1 = nn.BatchNorm2d(hidden_size)
-            surr_func = surrogate.ATan(alpha=2.0, spiking=True)
-            self.sn1 = neuron.MultiStepLIFNode(detach_reset=True, surrogate_function=surr_func)
-
         self.features = SCNN4Backbone(
+            timesteps,
+            neural_coding=neural_coding,
             hidden_size=hidden_size,
             channels=hidden_size if neural_coding is None else channels,
             max_pool=max_pool,
@@ -329,15 +342,6 @@ class SCNN4(torch.nn.Module):
         self.hidden_size = hidden_size
 
     def forward(self, x):
-        if self.neural_coding is None:
-            x = self.conv1(x)
-            x = self.bn1(x)
-            x.unsqueeze_(0)
-            x = x.repeat(self.timesteps, 1, 1, 1, 1)
-            x = self.sn1(x)
-        else:
-            x = neural_coding(x, self.neural_coding, self.timesteps)
-
         x = self.features(x)
         x = self.classifier(x)
         return x
