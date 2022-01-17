@@ -253,6 +253,8 @@ class SCNN4Backbone(SConvBase):
 
     def forward(self, x):
         functional.reset_net(self)
+        print(x.shape)
+        exit()
         x = super(SCNN4Backbone, self).forward(x)
         x = x.mean(0)
         x = x.reshape(x.size(0), -1)
