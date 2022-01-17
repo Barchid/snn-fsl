@@ -6,12 +6,6 @@ import torch.optim as optim
 from spikingjelly.clock_driven import surrogate, layer, neuron
 
 
-def maml_init_(module):
-    torch.nn.init.xavier_uniform_(module.weight.data, gain=1.0)
-    torch.nn.init.constant_(module.bias.data, 0.0)
-    return module
-
-
 class ConvBnSpike(nn.Sequential):
     """Convolution + BatchNorm + spiking neuron activation. Accepts input of dimension (T, B, C, H, W)"""
 
@@ -27,7 +21,6 @@ class ConvBnSpike(nn.Sequential):
                          bias=False,
                          dilation=dilation,
                          stride=stride)
-        maml_init_(conv)
         self.add_module('conv_bn', layer.SeqToANNContainer(
             conv,
             nn.BatchNorm2d(out_channels)
