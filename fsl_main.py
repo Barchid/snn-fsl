@@ -13,6 +13,8 @@ from learn2learn.algorithms import (
 )
 from learn2learn.utils.lightning import EpisodicBatcher
 
+from project.models.scnn4 import SCNN4
+
 
 def main():
     parser = ArgumentParser(conflict_handler="resolve", add_help=True)
@@ -25,7 +27,10 @@ def main():
 
     # add script-specific args
     parser.add_argument("--algorithm", type=str, default="protonet")
-    parser.add_argument("--dataset", type=str, default="mini-imagenet", choices=["mini-imagenet", "tiered-imagenet", ""])
+    parser.add_argument('--neural_coding', type=str, choices=["rate", "ttfs", "phase", "saccade", None], default=None)
+    parser.add_argument('--timesteps', type=int, default=12)
+    parser.add_argument("--dataset", type=str, default="mini-imagenet",
+                        choices=["mini-imagenet", "tiered-imagenet", ""])
     parser.add_argument("--root", type=str, default="~/data")
     parser.add_argument("--meta_batch_size", type=int, default=16)
     parser.add_argument("--seed", type=int, default=42)
@@ -59,10 +64,17 @@ def main():
     if args.dataset in ["mini-imagenet", "tiered-imagenet"]:
         model = l2l.vision.models.ResNet12(output_size=args.train_ways)
     else:  # CIFAR-FS, FC100
-        model = l2l.vision.models.CNN4(
+        # model = l2l.vision.models.CNN4(
+        #     output_size=args.train_ways,
+        #     hidden_size=64,
+        #     embedding_size=64 * 4,
+        # )
+        model = SCNN4(
             output_size=args.train_ways,
+            timesteps=args.timesteps,
             hidden_size=64,
-            embedding_size=64*4,
+            embedding_size=4 * 64,
+            neural_coding=args.neural_coding
         )
     features = model.features
     classifier = model.classifier
