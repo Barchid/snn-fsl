@@ -328,6 +328,8 @@ class SCNN4(torch.nn.Module):
         self.hidden_size = hidden_size
 
     def forward(self, x):
+        print(x.shape)
+        exit()
         if self.neural_coding is None:
             x = self.conv1(x)
             x = self.bn1(x)
