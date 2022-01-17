@@ -28,6 +28,7 @@ def main():
     # add script-specific args
     parser.add_argument("--algorithm", type=str, default="protonet")
     parser.add_argument('--neural_coding', type=str, choices=["rate", "ttfs", "phase", "saccade", None], default=None)
+    parser.add_argument('--is_grayscale', action='store_true')
     parser.add_argument('--timesteps', type=int, default=12)
     parser.add_argument("--dataset", type=str, default="mini-imagenet",
                         choices=["mini-imagenet", "tiered-imagenet", ""])
@@ -72,6 +73,7 @@ def main():
         model = SCNN4(
             output_size=args.train_ways,
             timesteps=args.timesteps,
+            channels=1 if args.is_grayscale else 3
             hidden_size=64,
             embedding_size=4 * 64,
             neural_coding=args.neural_coding
