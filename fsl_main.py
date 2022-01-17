@@ -14,6 +14,7 @@ from learn2learn.algorithms import (
 from learn2learn.utils.lightning import EpisodicBatcher
 
 from project.models.scnn4 import SCNN4
+from project.utils.lightning import TrackTestAccuracyCallback
 
 
 def main():
@@ -96,7 +97,7 @@ def main():
         gpus=1,
         accumulate_grad_batches=args.meta_batch_size,
         callbacks=[
-            l2l.utils.lightning.TrackTestAccuracyCallback(),
+            TrackTestAccuracyCallback(episodic_data), #l2l.utils.lightning.TrackTestAccuracyCallback(),
             l2l.utils.lightning.NoLeaveProgressBar(),
         ],
     )
