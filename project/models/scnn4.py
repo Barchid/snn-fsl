@@ -308,8 +308,7 @@ class SCNN4(torch.nn.Module):
 
         if self.neural_coding is None:
             self.conv1 = nn.Conv2d(channels, hidden_size, kernel_size=3,
-                                   stride=2 if max_pool else 1, padding=1, bias=True)
-            maml_init_(self.conv1)
+                                   stride=2 if max_pool else 1, padding=1, bias=False)
             self.bn1 = nn.BatchNorm2d(hidden_size)
             surr_func = surrogate.ATan(alpha=2.0, spiking=True)
             self.sn1 = neuron.MultiStepLIFNode(detach_reset=True, surrogate_function=surr_func)
