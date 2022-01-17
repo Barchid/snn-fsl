@@ -6,6 +6,9 @@ import learn2learn as l2l
 from scipy.stats import truncnorm
 
 from project.models.base_layers import ConvBnSpike, LinearSpike
+from spikingjelly.clock_driven import surrogate, neuron, functional, layer
+
+from project.utils.neural_coding import neural_coding
 
 
 def truncated_normal_(tensor, mean=0.0, std=1.0):
@@ -120,12 +123,11 @@ class SConvBase(torch.nn.Sequential):
                             neuron_model=neuron_model),
                 ]
         for _ in range(layers - 1):
-            core.append([ConvBnSpike(channels,
-                                     hidden,
-                                     3,
-                                     stride=2 if max_pool else 1,
-                                     neuron_model=neuron_model),
-                         ])
+            core.append(ConvBnSpike(hidden,
+                                    hidden,
+                                    3,
+                                    stride=2 if max_pool else 1,
+                                    neuron_model=neuron_model))
         super(SConvBase, self).__init__(*core)
 
 
@@ -216,7 +218,7 @@ class OmniglotSCNN(torch.nn.Module):
         self.features = torch.nn.Sequential(
             l2l.nn.Lambda(lambda x: x.view(x.shape[0], -1, 1, 28, 28)),
             self.base,
-            l2l.nn.Lambda(lambda x: x.mean(0))
+            l2l.nn.Lambda(lambda x: x.mean(0)),
             l2l.nn.Lambda(lambda x: x.mean(dim=[2, 3])),
             l2l.nn.Flatten(),
         )
@@ -225,6 +227,7 @@ class OmniglotSCNN(torch.nn.Module):
         self.classifier.bias.data.mul_(0.0)
 
     def forward(self, x):
+        functional.reset_net(self)
         x = self.features(x)
         x = x.mean(0)
         x = self.classifier(x)
@@ -248,6 +251,7 @@ class SCNN4Backbone(SConvBase):
         )
 
     def forward(self, x):
+        functional.reset_net(self)
         x = super(SCNN4Backbone, self).forward(x)
         x = x.mean(0)
         x = x.reshape(x.size(0), -1)
@@ -286,11 +290,13 @@ class SCNN4(torch.nn.Module):
     def __init__(
         self,
         output_size,
+        timesteps: int,
         hidden_size=64,
         layers=4,
         channels=3,
         max_pool=True,
         embedding_size=None,
+        neural_coding: str = None
     ):
         super(SCNN4, self).__init__()
         if embedding_size is None:
@@ -308,8 +314,13 @@ class SCNN4(torch.nn.Module):
         )
         maml_init_(self.classifier)
         self.hidden_size = hidden_size
+        self.neural_coding = neural_coding
+        self.timesteps = timesteps
 
     def forward(self, x):
+        if self.neural_coding is not None:
+            x = neural_coding(x, self.neural_coding, self.timesteps)
+
         x = self.features(x)
         x = self.classifier(x)
         return x
