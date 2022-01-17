@@ -101,10 +101,6 @@ def main():
         ],
     )
     
-    epochifier = episodic_data.val_dataloader()
-    print(len(epochifier))
-    print(epochifier[0])
-    
     trainer.fit(model=algorithm, datamodule=episodic_data)
     trainer.test(ckpt_path="best")
 

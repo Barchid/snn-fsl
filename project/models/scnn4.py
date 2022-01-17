@@ -254,7 +254,6 @@ class SCNN4Backbone(SConvBase):
     def forward(self, x):
         functional.reset_net(self)
         print(x.shape)
-        exit()
         x = super(SCNN4Backbone, self).forward(x)
         x = x.mean(0)
         x = x.reshape(x.size(0), -1)
@@ -330,8 +329,6 @@ class SCNN4(torch.nn.Module):
         self.hidden_size = hidden_size
 
     def forward(self, x):
-        print(x.shape)
-        exit()
         if self.neural_coding is None:
             x = self.conv1(x)
             x = self.bn1(x)
