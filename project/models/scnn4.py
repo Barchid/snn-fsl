@@ -259,8 +259,8 @@ class SCNN4Backbone(nn.Module):
 
         self.backbone = SConvBase(
             hidden=hidden_size,
-            layers=layers - 1 if neural_coding else layers,
-            channels=hidden_size if neural_coding else channels,
+            layers=layers if neural_coding else layers - 1,
+            channels=channels if neural_coding else hidden_size,
             max_pool=max_pool
         )
 
