@@ -246,6 +246,7 @@ class SCNN4Backbone(nn.Module):
         channels=3,
         max_pool=False
     ):
+        super(SCNN4Backbone, self).__init__()
         self.neural_coding = neural_coding
         self.timesteps = timesteps
 
