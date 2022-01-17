@@ -73,7 +73,7 @@ def main():
         model = SCNN4(
             output_size=args.train_ways,
             timesteps=args.timesteps,
-            channels=1 if args.is_grayscale else 3
+            channels=1 if args.is_grayscale else 3,
             hidden_size=64,
             embedding_size=4 * 64,
             neural_coding=args.neural_coding
