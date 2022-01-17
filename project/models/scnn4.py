@@ -330,9 +330,9 @@ class SCNN4(torch.nn.Module):
             timesteps,
             neural_coding=neural_coding,
             hidden_size=hidden_size,
-            channels=hidden_size if neural_coding is None else channels,
+            channels=channels,
             max_pool=max_pool,
-            layers=layers - 1 if neural_coding is None else layers,
+            layers=layers,
         )
         self.classifier = torch.nn.Linear(
             embedding_size,
