@@ -31,7 +31,7 @@ def main():
     parser.add_argument('--is_grayscale', action='store_true')
     parser.add_argument('--timesteps', type=int, default=12)
     parser.add_argument("--dataset", type=str, default="mini-imagenet",
-                        choices=["mini-imagenet", "tiered-imagenet", ""])
+                        choices=["mini-imagenet", "tiered-imagenet", "cifarfs", "omniglot", "fc100"])
     parser.add_argument("--root", type=str, default="~/data")
     parser.add_argument("--meta_batch_size", type=int, default=16)
     parser.add_argument("--seed", type=int, default=42)
